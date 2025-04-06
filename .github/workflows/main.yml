@@ -72,10 +72,12 @@ jobs:
 
     - name: Deploy Infrastructure
       run: |
-        pulumi stack select ${{ env.STACK_NAME }} || pulumi stack init ${{ env.STACK_NAME }}
-        pulumi config set aws:region ${{ env.AWS_REGION }}
-        pulumi up --yes --skip-preview
+        FULL_STACK_NAME="${{ github.repository_owner }}/$(pulumi whoami -p)/${{ env.STACK_NAME }}"
+        pulumi stack select $FULL_STACK_NAME || pulumi stack init $FULL_STACK_NAME
+        pulumi config set aws:region ${{ env.AWS_REGION }} --stack $FULL_STACK_NAME
+        pulumi up --yes --skip-preview --stack $FULL_STACK_NAME
       env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         PULUMI_BACKEND_URL: "https://api.pulumi.com"
 
     - name: Run integration tests
