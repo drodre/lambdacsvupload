@@ -53,3 +53,4 @@ def test_lambda_trigger(aws_credentials, setup_resources):
     assert result.get("status") == "OK"
 
     s3.delete_object(Bucket=bucket_name, Key=test_key)
+
