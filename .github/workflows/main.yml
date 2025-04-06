@@ -75,7 +75,7 @@ jobs:
 
     - name: Deploy Infrastructure
       run: |
-        PROJECT_NAME=$(yq e '.name' Pulumi.yaml)
+        PROJECT_NAME=$(yq '.name' Pulumi.yaml)
         FULL_STACK_NAME="${{ github.repository_owner }}/${PROJECT_NAME}/${{ env.STACK_NAME }}"
         pulumi stack select $FULL_STACK_NAME || pulumi stack init $FULL_STACK_NAME
         pulumi config set aws:region ${{ env.AWS_REGION }} --stack $FULL_STACK_NAME
