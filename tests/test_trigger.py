@@ -5,14 +5,19 @@ import uuid
 import pytest
 
 @pytest.fixture
+def aws_credentials():
+    os.environ['AWS_ACCESS_KEY_ID'] = os.getenv('AWS_ACCESS_KEY_ID')
+    os.environ['AWS_SECRET_ACCESS_KEY'] = os.getenv('AWS_SECRET_ACCESS_KEY')
+    os.environ['AWS_REGION'] = os.getenv('AWS_REGION', 'eu-west-1')
+
+@pytest.fixture
 def setup_resources():   
     return {
         "bucket_name": os.getenv('BUCKET_NAME'),
         "lambda_arn": os.getenv('LAMBDA_ARN')
     }
 
-def test_lambda_trigger(aws_credentials, setup_resources):
-    # Configura clientes AWS
+def test_lambda_trigger(aws_credentials, setup_resources):  
     s3 = boto3.client('s3')
     lambda_client = boto3.client('lambda')
 
@@ -20,7 +25,7 @@ def test_lambda_trigger(aws_credentials, setup_resources):
     lambda_arn = setup_resources["lambda_arn"]
 
     if not bucket_name or not lambda_arn:
-        pytest.skip("BUCKET_NAME oe LAMBDA_ARN variables missed")
+        pytest.skip("BUCKET_NAME or LAMBDA_ARN variables missed")
 
     test_key = f"test_auto_{uuid.uuid4().hex[:6]}.csv"
     s3.put_object(
