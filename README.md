@@ -18,7 +18,7 @@
    - An AWS credentials.
    - Pulumi token.
 
-2. **Manual Steps**:
+2. **Manual Steps to deploy Pulumi and Lambda function**:
    ```bash
    curl -sSL https://get.pulumi.com | sh
    alias pulumi=~/.pulumi/bin/pulumi
@@ -30,23 +30,24 @@
    pulumi up```
 
 3. **Automated step**
-   Through Github Action CI/CD pipeline.
+   Through Github Actions CI/CD pipeline.
 
 ## Pulumi and Lambda Explanation ##
 
 I have decided to create a Lambda function that processes a CSV file and count how many rows and words has that csv. It uses Pulumi and I chose to use a '**dev**' environment in the '**eu-west-1**' region.
-The **__main_:.py** file has the Pulumi IaC logic:
+The **\_\_main\_\_.py** file has the Pulumi IaC logic:
 
 - Creates a S3 bucket with AES256 encryption. It has the name **csv-uploads** plus a randon string due to S3 unique name restrictions.
 - There is a IAM role for Lambda. 
 - A policy acess to S3 bucket to let Lambda get objects.
 - The proper Lambda function named **csvProcessor**:
     - It uses Python 3.9.
-    - The handler.handler is the starting point
+    - The handler.handler is the starting point.
     - The code is packed in a directory named **lambda**.
     - It has a **timeout** of 60 seconds.
     - Log level to info.
 - Pemissions to S3 for invoking Lambda.
+- A notification from S3 to Lambda when te pattern is reached: new object created with CSV extension.
 - Exporting resources output fro being used later.
 
 The Lambda function
