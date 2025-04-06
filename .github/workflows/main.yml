@@ -83,6 +83,9 @@ jobs:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         PULUMI_BACKEND_URL: "https://api.pulumi.com"
 
+    - name: Install test dependencies
+      run: pip install pytest boto3
+
     - name: Run integration tests
       run: python tests/test_trigger.py
       env:
