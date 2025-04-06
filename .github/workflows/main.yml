@@ -1,0 +1,78 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  PULUMI_VERSION: "3.115.0"
+  STACK_NAME: "dev"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest boto3
+
+    - name: Run unit tests
+      run: pytest tests/
+
+  deploy:
+    needs: test  # Espera a que pasen los tests
+    if: github.ref == 'refs/heads/main'  # Solo en main
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    - name: Install Pulumi
+      uses: pulumi/actions@v4
+      with:
+        pulumi-version: ${{ env.PULUMI_VERSION }}
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Pulumi Cloud
+      run: pulumi login
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+    - name: Deploy Infrastructure
+      run: |
+        pulumi stack select ${{ env.STACK_NAME }} || pulumi stack init ${{ env.STACK_NAME }}
+        pulumi config set aws:region ${{ env.AWS_REGION }}
+        pulumi up --yes --skip-preview
+      env:
+        PULUMI_BACKEND_URL: "https://api.pulumi.com"
+
+    - name: Run integration tests
+      run: python tests/test_trigger.py
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
