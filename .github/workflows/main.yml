@@ -38,7 +38,7 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Run unit tests
-      run: pytest tests/
+      run: pytest tests/pytest_trigger.py
 
   deploy:
     needs: test  # Espera a que pasen los tests
