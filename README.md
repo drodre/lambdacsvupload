@@ -60,12 +60,68 @@ An example of the bucket created by Pulumi:
 
 Two other files are related to Pulumi: **Pulumi.yaml** that contains the metadata of the project like runtime (Python) or the name of the project. The other one is **Pulumi.dev.yaml** that contains variables for the dev stack. If in the future it needs a new enviroment or stack with a different AWS region, simply we need to create a new file like 'Pulumi.pro.yaml' with other values.
 
+## Lambda function ##
+```
+import boto3
+import csv
+import json
+
+def handler(event, context):
+    print("Event received:", json.dumps(event))
+
+    if 'Records' not in event:
+        print("Error: Event has no Records")
+        return {"status": "ERROR", "message": "Wrong event format"}
+
+    s3 = boto3.client('s3')
+    for record in event['Records']:
+        bucket = record['s3']['bucket']['name']
+        key = record['s3']['object']['key']
+        print(f"Processing{key} in {bucket}")
+
+        response = s3.get_object(Bucket=bucket, Key=key)
+        data = response['Body'].read().decode('utf-8')
+
+        reader = csv.reader(data.splitlines())
+        rows = list(reader)
+        char_count = len(data)
+
+        print(f"File {key} has {len(rows)} rows and {char_count} characters")
+
+        return {
+            "status": "OK",
+            "rows": len(rows),
+            "characters": char_count
+        }
+```
+
+- The handler receives the event, if it's empty prints a message.
+- If not:
+   - Process bucket and file.
+   - Read data.
+   - Divide data into lines.
+   - Counts number of lines.
+   - Counts characters.
+   - Finally prints the number of rows and characters and a response with status, rows and characters.
+
+
 ## Github Actions CI/CD pipeline **
 
 A CI/CD pipeline under **.github/workflows/main.yaml** has two steps:
 
+![Pipeline image](images/Pipeline_view.png)
+
 - test: it tests if code is ok through pytest.
+
+![Pipeline Test image](images/Pipeline_test_view.png)
+
+
 - deploy: It has all the important logic: install all Python and Pulumi dependencies, execute Pulumi stack without human action and finally make a test creating a small and random csv file that is uploaded to th bucket and triggers the Lambda function. If the Lambda function is invoked we could see in Cloudwatch logs that activity.
+
+![Pipeline Deploy image](images/Pipeline_deploy_view.png)
+
+
+When the file is uploaded, we could see the activity in Cloudwatch:
 
 ![Cloudwatch image](images/Cloudwatch_view.png)
 

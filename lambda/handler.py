@@ -7,7 +7,7 @@ def handler(event, context):
     
     if 'Records' not in event:
         print("Error: Event has no Records")
-        return {"status": "ERROR", "message": "Wrong vent format"}
+        return {"status": "ERROR", "message": "Wrong event format"}
     
     s3 = boto3.client('s3')
     for record in event['Records']:
