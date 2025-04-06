@@ -1,18 +1,16 @@
 import boto3
 import os
 import json
+import uuid
 import pytest
 
-# Configuración desde variables de entorno (se configuran en GitHub Actions)
-@pytest.fixture
 def aws_credentials():
     os.environ['AWS_ACCESS_KEY_ID'] = os.getenv('AWS_ACCESS_KEY_ID')
     os.environ['AWS_SECRET_ACCESS_KEY'] = os.getenv('AWS_SECRET_ACCESS_KEY')
-    os.environ['AWS_REGION'] = os.getenv('AWS_REGION', 'us-east-1')
+    os.environ['AWS_REGION'] = os.getenv('AWS_REGION', 'eu-west-1')
 
 @pytest.fixture
-def setup_resources():
-    # Estos valores deben ser inyectados desde los outputs de Pulumi
+def setup_resources():   
     return {
         "bucket_name": os.getenv('BUCKET_NAME'),
         "lambda_arn": os.getenv('LAMBDA_ARN')
@@ -27,18 +25,16 @@ def test_lambda_trigger(aws_credentials, setup_resources):
     lambda_arn = setup_resources["lambda_arn"]
 
     if not bucket_name or not lambda_arn:
-        pytest.skip("Faltan variables de entorno BUCKET_NAME o LAMBDA_ARN")
+        pytest.skip("BUCKET_NAME oe LAMBDA_ARN variables missed")
 
-    # 1. Sube archivo de prueba
-    test_key = "test_auto.csv"
+    test_key = f"test_auto_{uuid.uuid4().hex[:6]}.csv"
     s3.put_object(
         Bucket=bucket_name,
         Key=test_key,
-        Body="id,value\n1,100\n2,200"
+        Body="id,value\n1,100\n2,200\n3,300"
     )
-    print(f"✅ Archivo {test_key} subido a {bucket_name}")
+    print(f"✅ File {test_key} uploaded to {bucket_name}")
 
-    # 2. Invoca Lambda
     response = lambda_client.invoke(
         FunctionName=lambda_arn,
         InvocationType='RequestResponse',
@@ -53,8 +49,7 @@ def test_lambda_trigger(aws_credentials, setup_resources):
     )
     
     result = json.loads(response['Payload'].read().decode())
-    print("🔹 Respuesta Lambda:", result)
+    print("🔹 Lambda response:", result)
     assert result.get("status") == "OK"
 
-    # 3. Limpieza
     s3.delete_object(Bucket=bucket_name, Key=test_key)
