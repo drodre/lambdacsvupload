@@ -19,7 +19,7 @@
    ```bash
    curl -sSL https://get.pulumi.com | sh
    alias pulumi=~/.pulumi/bin/pulumi
-   pip install venv env
+   python3 -m venv env
    source env/bin/activate
    env/bin/pip install -r requirements.txt
    pulumi stack init dev

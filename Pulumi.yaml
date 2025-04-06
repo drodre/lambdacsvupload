@@ -1,0 +1,3 @@
+name: s3-lambda-csv
+runtime: python
+description: Infra to process CSV in S3 with Lambda
